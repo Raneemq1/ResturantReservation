@@ -41,5 +41,10 @@ namespace ResturantReservation.Db.Repositories
                await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<IEnumerable<Customer>> CustomerReservationsWithLargePartySize(int size)
+        {
+            return await _context.Customers.FromSqlInterpolated($"CustomerReservationWithLargePartySize {size}").ToListAsync();
+        }
     }
 }

@@ -20,3 +20,10 @@ foreach(var item in empsResturantItems)
 {
     Console.WriteLine(item.EmployeeName+item.ResturantName);
 }
+
+CustomerRepository customerRepo = new(context);
+var customerItems = await customerRepo.CustomerReservationsWithLargePartySize(4);
+foreach(var item in customerItems)
+{
+    Console.WriteLine(item.FirstName);
+}
