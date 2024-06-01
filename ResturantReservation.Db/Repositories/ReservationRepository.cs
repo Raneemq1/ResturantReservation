@@ -39,6 +39,11 @@ namespace ResturantReservation.Db.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task<IEnumerable<Reservation>> GetReservationsByCustomer(int CustomerId)
+        {
+            return await _dbSet.Where(r=>r.CustomerId==CustomerId).ToListAsync();
+        }
+
     }
 
 }

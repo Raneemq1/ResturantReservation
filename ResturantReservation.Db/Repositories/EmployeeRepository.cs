@@ -4,7 +4,7 @@ using ResturantReservation.Db.Models;
 
 namespace ResturantReservation.Db.Repositories
 {
-    public class EmployeeRepository:IBaseRepository<Employee>
+    public class EmployeeRepository : IBaseRepository<Employee>
     {
         private DbSet<Employee> _dbSet;
         private RestaurantReservationDbContext _context;
@@ -35,11 +35,17 @@ namespace ResturantReservation.Db.Repositories
             var item = await _dbSet.FirstOrDefaultAsync(d => d.EmployeeId == entity.EmployeeId);
             if (item is not null)
             {
-                item.FirstName= entity.FirstName;
-                item.LastName= entity.LastName;
-                item.Position= entity.Position;
+                item.FirstName = entity.FirstName;
+                item.LastName = entity.LastName;
+                item.Position = entity.Position;
                 await _context.SaveChangesAsync();
             }
+        }
+        public async Task<IEnumerable<Employee>> ListManagers()
+        {
+            return await _dbSet.Where(e => e.Position == "Manager").ToListAsync();
+
+
         }
     }
 }
