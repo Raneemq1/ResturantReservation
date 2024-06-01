@@ -1,5 +1,4 @@
 ﻿using ResturantReservation.Db;
-using ResturantReservation.Db.Models;
 using ResturantReservation.Db.Repositories;
 
 Console.WriteLine("Resturant Reservation!");
@@ -15,3 +14,9 @@ foreach (var item in orderedMenuItems)
 
 Console.WriteLine(await orderRepo.CalculateAverageOrderAmount(1));
 
+EmployeeRepository empRepo = new(context);
+var empsResturantItems = await empRepo.EmployeeAndResturantDetails();
+foreach(var item in empsResturantItems)
+{
+    Console.WriteLine(item.EmployeeName+item.ResturantName);
+}

@@ -14,6 +14,9 @@ namespace ResturantReservation.Db
         public DbSet<Reservation> Reservations { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<Resturant> Resturants { get; set; }
+        public DbSet<ReservationDetail> ReservationDetails {  get; set; }
+        public DbSet<EmployeeResturantDetail> EmployeeResturantDetails { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var config = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build();
@@ -88,6 +91,8 @@ namespace ResturantReservation.Db
                 new OrderItem { OrderItemId = 5, OrderId = 5, MenuItemId = 5, Quantity = 6 }
             );
 
+            modelBuilder.Entity<ReservationDetail>().ToView("ReservationDetails").HasNoKey();
+            modelBuilder.Entity<EmployeeResturantDetail>().ToView("EmployeeResturantDetails").HasNoKey();
         }
     }
 }
