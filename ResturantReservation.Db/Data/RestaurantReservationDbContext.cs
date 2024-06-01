@@ -18,8 +18,8 @@ namespace ResturantReservation.Db
         {
             var config = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build();
             string connectionString = config["SqlServerDb:connectionString"];
-            if (!optionsBuilder.IsConfigured)
-                optionsBuilder.UseSqlServer("Server=desktop-g7mhp6v\\mssqlserver01;Database=inventory;Trusted_Connection=True;TrustServerCertificate=True;");
+             if(!optionsBuilder.IsConfigured)
+                optionsBuilder.UseSqlServer(connectionString);
         }
     }
 }
