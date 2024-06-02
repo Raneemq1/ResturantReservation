@@ -39,5 +39,12 @@ namespace ResturantReservation.Db.Repositories
             await _context.SaveChangesAsync();
         }
     }
-}
+
+        public async Task<int> TotalRevenue(int resturantId)
+        {
+            return await _dbSet.Where(r=>r.ResturantId==resturantId).Select(r=>_context.TotalRevenue(r.ResturantId)).FirstAsync();
+            }
+
+    }
+
 }

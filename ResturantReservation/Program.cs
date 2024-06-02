@@ -27,3 +27,6 @@ foreach(var item in customerItems)
 {
     Console.WriteLine(item.FirstName);
 }
+
+ResturantRepository resturantRepo = new(context);
+Console.WriteLine(await resturantRepo.TotalRevenue(1));

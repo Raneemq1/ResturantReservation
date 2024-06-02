@@ -93,6 +93,10 @@ namespace ResturantReservation.Db
 
             modelBuilder.Entity<ReservationDetail>().ToView("ReservationDetails").HasNoKey();
             modelBuilder.Entity<EmployeeResturantDetail>().ToView("EmployeeResturantDetails").HasNoKey();
+
+            modelBuilder.HasDbFunction(()=>TotalRevenue(default)).HasName("fn_TotalRevenueOfResturant");
         }
+
+        public int TotalRevenue(int resturantId)=>throw new NotImplementedException();
     }
 }
