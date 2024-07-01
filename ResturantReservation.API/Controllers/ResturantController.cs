@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResturantReservation.API.DTO;
 using ResturantReservation.Db;
@@ -6,6 +7,7 @@ using ResturantReservation.Db.Models;
 
 namespace ResturantReservation.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class ResturantController : ControllerBase, IBaseController<ResturantDto>
