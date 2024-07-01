@@ -8,12 +8,12 @@ namespace ResturantReservation.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class UserController:ControllerBase
+    public class UserController : ControllerBase
     {
         private RestaurantReservationDbContext _context;
         private IConfiguration _config;
-        
-        public UserController(RestaurantReservationDbContext context,IConfiguration config)
+
+        public UserController(RestaurantReservationDbContext context, IConfiguration config)
         {
             _context = context;
             _config = config;
@@ -31,14 +31,14 @@ namespace ResturantReservation.API.Controllers
             JwtHelper helper = new(_config);
             byte[] encPassword = new byte[user.UserPassword.Length];
             encPassword = System.Text.Encoding.UTF8.GetBytes(user.UserPassword);
-            user.UserPassword=Convert.ToBase64String(encPassword);
+            user.UserPassword = Convert.ToBase64String(encPassword);
 
             var token = helper.GenerateToken(user);
             if (helper.ValidateToken(token))
             {
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
-                return Ok(new {Token=token});
+                return Ok(new { Token = token });
             }
             return BadRequest("Invalid Token");
         }

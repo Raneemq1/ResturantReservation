@@ -1,7 +1,9 @@
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResturantReservation.API.DTO;
+using ResturantReservation.API.Validators;
 using ResturantReservation.Db;
 using ResturantReservation.Db.Models;
 
@@ -21,16 +23,25 @@ namespace ResturantReservation.API.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(CustomerDto entity)
         {
-            var customer = new Customer
+            CustomerDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                Email = entity.Email,
-                FirstName = entity.FirstName,
-                LastName = entity.LastName,
-                PhoneNumber = entity.PhoneNumber,
-            };
-            _context.Customers.Add(customer);
-            await _context.SaveChangesAsync();
-            return Ok($"customer with Id={customer.CustomerId} added successfully");
+                var customer = new Customer
+                {
+                    Email = entity.Email,
+                    FirstName = entity.FirstName,
+                    LastName = entity.LastName,
+                    PhoneNumber = entity.PhoneNumber,
+                };
+                _context.Customers.Add(customer);
+                await _context.SaveChangesAsync();
+                return Ok($"customer with Id={customer.CustomerId} added successfully");
+            }
+            else
+            {
+                return NotFound(result.ToString());
+            }
         }
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
@@ -47,17 +58,26 @@ namespace ResturantReservation.API.Controllers
         [HttpPut]
         public async Task<ActionResult> Edit(int id, CustomerDto entity)
         {
-            var item = await _context.Customers.FirstOrDefaultAsync(customer => customer.CustomerId == id);
-            if (item is not null)
+            CustomerDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                item.PhoneNumber = entity.PhoneNumber;
-                item.FirstName = entity.FirstName;
-                item.LastName = entity.LastName;
-                item.Email = entity.Email;
-                await _context.SaveChangesAsync();
-                return Ok("updated successfully");
+                var item = await _context.Customers.FirstOrDefaultAsync(customer => customer.CustomerId == id);
+                if (item is not null)
+                {
+                    item.PhoneNumber = entity.PhoneNumber;
+                    item.FirstName = entity.FirstName;
+                    item.LastName = entity.LastName;
+                    item.Email = entity.Email;
+                    await _context.SaveChangesAsync();
+                    return Ok("updated successfully");
+                }
+                return NotFound("no item found with this Id to update");
             }
-            return NotFound("no item found with this Id to update");
+            else
+            {
+                return NotFound(result.ToString());
+            }
         }
         [HttpGet]
         public async Task<ActionResult<CustomerDto>> Get(int id)

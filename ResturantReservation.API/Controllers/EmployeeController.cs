@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResturantReservation.API.DTO;
+using ResturantReservation.API.Validators;
 using ResturantReservation.Db;
 using ResturantReservation.Db.Models;
 
@@ -21,16 +23,25 @@ namespace ResturantReservation.API.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(EmployeeDto entity)
         {
-            var employee = new Employee
+            EmployeeDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                FirstName = entity.FirstName,
-                LastName = entity.LastName,
-                ResturantId = entity.ResturantId,
-                Position = entity.Position
-            };
-            _context.Employees.Add(employee);
-            await _context.SaveChangesAsync();
-            return Ok($"employee with id={employee.EmployeeId} added successfully");
+                var employee = new Employee
+                {
+                    FirstName = entity.FirstName,
+                    LastName = entity.LastName,
+                    ResturantId = entity.ResturantId,
+                    Position = entity.Position
+                };
+                _context.Employees.Add(employee);
+                await _context.SaveChangesAsync();
+                return Ok($"employee with id={employee.EmployeeId} added successfully");
+            }
+            else
+            {
+                return BadRequest(result.ToString());
+            }
         }
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
@@ -47,17 +58,26 @@ namespace ResturantReservation.API.Controllers
         [HttpPut]
         public async Task<ActionResult> Edit(int id, EmployeeDto entity)
         {
-            var item = await _context.Employees.FirstOrDefaultAsync(emp => emp.EmployeeId == id);
-            if (item is not null)
+            EmployeeDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                item.FirstName = entity.FirstName;
-                item.LastName = entity.LastName;
-                item.ResturantId = entity.ResturantId;
-                item.Position = entity.Position;
-                await _context.SaveChangesAsync();
-                return Ok("updated successfully");
+                var item = await _context.Employees.FirstOrDefaultAsync(emp => emp.EmployeeId == id);
+                if (item is not null)
+                {
+                    item.FirstName = entity.FirstName;
+                    item.LastName = entity.LastName;
+                    item.ResturantId = entity.ResturantId;
+                    item.Position = entity.Position;
+                    await _context.SaveChangesAsync();
+                    return Ok("updated successfully");
+                }
+                return NotFound("no item update to remove");
             }
-            return NotFound("no item update to remove");
+            else
+            {
+                return BadRequest(result.ToString());
+            }
         }
         [HttpGet]
         public async Task<ActionResult<EmployeeDto>> Get(int id)
@@ -83,7 +103,7 @@ namespace ResturantReservation.API.Controllers
             try
             {
                 var items = await _context.Employees.ToListAsync();
-                var employees = items.Select(emp => new EmployeeDto 
+                var employees = items.Select(emp => new EmployeeDto
                 {
                     EmployeeId = emp.EmployeeId,
                     FirstName = emp.FirstName,
@@ -120,6 +140,6 @@ namespace ResturantReservation.API.Controllers
                 return NotFound("no items yet");
             }
         }
-       
+
     }
 }

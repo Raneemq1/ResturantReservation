@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResturantReservation.API.DTO;
+using ResturantReservation.API.Validators;
 using ResturantReservation.Db;
 using ResturantReservation.Db.Models;
 
@@ -21,14 +23,23 @@ namespace ResturantReservation.API.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(OrderDto entity)
         {
-            var order = new Order
+            OrderDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                OrderId = entity.OrderId,
-                OrderDate = entity.OrderDate,
-            };
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-            return Ok($"order with id={order.OrderId} added successfully");
+                var order = new Order
+                {
+                    OrderId = entity.OrderId,
+                    OrderDate = entity.OrderDate,
+                };
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
+                return Ok($"order with id={order.OrderId} added successfully");
+            }
+            else
+            {
+                return BadRequest(result.ToString());
+            }
         }
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
@@ -45,17 +56,26 @@ namespace ResturantReservation.API.Controllers
         [HttpPut]
         public async Task<ActionResult> Edit(int id, OrderDto entity)
         {
-            var item = await _context.Orders.FirstOrDefaultAsync(order => order.OrderId == id);
-            if (item is not null)
+            OrderDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                item.OrderDate = entity.OrderDate;
-                item.EmployeeId = entity.EmployeeId;
-                item.ReservationId = entity.ReservationId;
-                item.TotalAmount = entity.TotalAmount;
-                await _context.SaveChangesAsync();
-                return Ok("updated successfully");
+                var item = await _context.Orders.FirstOrDefaultAsync(order => order.OrderId == id);
+                if (item is not null)
+                {
+                    item.OrderDate = entity.OrderDate;
+                    item.EmployeeId = entity.EmployeeId;
+                    item.ReservationId = entity.ReservationId;
+                    item.TotalAmount = entity.TotalAmount;
+                    await _context.SaveChangesAsync();
+                    return Ok("updated successfully");
+                }
+                return NotFound("item not found to update");
             }
-            return NotFound("item not found to update");
+            else
+            {
+                return BadRequest(result.ToString());
+            }
         }
         [HttpGet]
         public async Task<ActionResult<OrderDto>> Get(int id)
@@ -98,11 +118,12 @@ namespace ResturantReservation.API.Controllers
         }
         [HttpGet("/api/reservations/{reservationId}/orders")]
         public async Task<ActionResult<List<OrderMenuItem>>> ListOrdersAndMenuItemsByReservationId(int reservationId)
-        {  try
+        {
+            try
             {
-                var reservations = await _context.Orders.Where(order => order.ReservationId == reservationId).GroupJoin(_context.OrderItems,order => order.OrderId,
+                var reservations = await _context.Orders.Where(order => order.ReservationId == reservationId).GroupJoin(_context.OrderItems, order => order.OrderId,
                     orderItem => orderItem.OrderId, (order, orderItem) => new OrderMenuItem
-                    (order.OrderId,orderItem.Select(item => item.MenuItem).FirstOrDefault())).ToListAsync();
+                    (order.OrderId, orderItem.Select(item => item.MenuItem).FirstOrDefault())).ToListAsync();
 
                 return Ok(reservations);
             }
@@ -119,8 +140,8 @@ namespace ResturantReservation.API.Controllers
             {
                 var reservations = await _context.Orders.Where(order => order.ReservationId == reservationId).GroupJoin(_context.OrderItems,
                    order => order.OrderId,
-                   orderItem => orderItem.OrderId, (order,orderItem)=>orderItem.Select(o=>o.MenuItem).FirstOrDefault()
-                   ).OrderBy(m=>m.MenuItemId).ToListAsync();
+                   orderItem => orderItem.OrderId, (order, orderItem) => orderItem.Select(o => o.MenuItem).FirstOrDefault()
+                   ).OrderBy(m => m.MenuItemId).ToListAsync();
                 return Ok(reservations);
             }
             catch
@@ -131,7 +152,7 @@ namespace ResturantReservation.API.Controllers
         [HttpGet("/api/employees/{employeeId}/average-order-amount")]
         public async Task<ActionResult<double>> AvgAmountOfOrdersByEmployeeId(int employeeId)
         {
-            var avg=await _context.Orders.Where(o => o.EmployeeId == employeeId).Select(o => o.TotalAmount).AverageAsync();
+            var avg = await _context.Orders.Where(o => o.EmployeeId == employeeId).Select(o => o.TotalAmount).AverageAsync();
             return Ok(avg);
         }
     }

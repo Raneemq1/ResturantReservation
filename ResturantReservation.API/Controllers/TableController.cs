@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResturantReservation.API.DTO;
+using ResturantReservation.API.Validators;
 using ResturantReservation.Db;
 using ResturantReservation.Db.Models;
 
@@ -21,14 +23,20 @@ namespace ResturantReservation.API.Controllers
         [HttpPost]
         public async Task<ActionResult> Add([FromBody] TableDto entity)
         {
-            var table = new Table
+            TableDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                ResturantId = entity.ResturantId,
-                Capacity = entity.Capacity,
-            };
-            _context.Tables.Add(table);
-            await _context.SaveChangesAsync();
-            return Ok($"new table with Id={table.TableId} sucessfully added");
+                var table = new Table
+                {
+                    ResturantId = entity.ResturantId,
+                    Capacity = entity.Capacity,
+                };
+                _context.Tables.Add(table);
+                await _context.SaveChangesAsync();
+                return Ok($"new table with Id={table.TableId} sucessfully added");
+            }
+            return BadRequest(result.ToString());
         }
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
@@ -45,15 +53,21 @@ namespace ResturantReservation.API.Controllers
         [HttpPut]
         public async Task<ActionResult> Edit(int id, TableDto entity)
         {
-            var item = await _context.Tables.FirstOrDefaultAsync(t => t.TableId == id);
-            if (item is not null)
+            TableDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                item.ResturantId = entity.ResturantId;
-                item.Capacity = entity.Capacity;
-                await _context.SaveChangesAsync();
-                return Ok("updated successfully");
+                var item = await _context.Tables.FirstOrDefaultAsync(t => t.TableId == id);
+                if (item is not null)
+                {
+                    item.ResturantId = entity.ResturantId;
+                    item.Capacity = entity.Capacity;
+                    await _context.SaveChangesAsync();
+                    return Ok("updated successfully");
+                }
+                return BadRequest("not updated successfully");
             }
-            return BadRequest("not updated successfully");
+            return BadRequest(result.ToString());
         }
         [HttpGet]
         public async Task<ActionResult<TableDto>> Get(int id)

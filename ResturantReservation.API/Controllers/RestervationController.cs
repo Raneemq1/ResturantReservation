@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResturantReservation.API.DTO;
+using ResturantReservation.API.Validators;
 using ResturantReservation.Db;
 using ResturantReservation.Db.Models;
+
 
 namespace ResturantReservation.API.Controllers
 {
@@ -21,23 +24,30 @@ namespace ResturantReservation.API.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(ReservationDto entity)
         {
-            var reservation = new Reservation
+            ReservationDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                ReservationDate=entity.ReservationDate,
-                ResturantId=entity.ResturantId,
-                CustomerId=entity.CustomerId,
-                PartySize=entity.PartySize,
-                TableId=entity.TableId,
-            };
-            _context.Reservations.Add(reservation);
-            await _context.SaveChangesAsync();
-            return Ok($"reservation with Id={reservation.ReservationId} added successfully");
+                var reservation = new Reservation
+                {
+                    ReservationDate = entity.ReservationDate,
+                    ResturantId = entity.ResturantId,
+                    CustomerId = entity.CustomerId,
+                    PartySize = entity.PartySize,
+                    TableId = entity.TableId,
+                };
+                _context.Reservations.Add(reservation);
+                await _context.SaveChangesAsync();
+
+                return Ok($"reservation with Id={reservation.ReservationId} added successfully");
+            }
+            return BadRequest(result.ToString());
         }
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            var item=await _context.Reservations.FirstOrDefaultAsync(res=>res.ReservationId==id);   
-            if(item is not null)
+            var item = await _context.Reservations.FirstOrDefaultAsync(res => res.ReservationId == id);
+            if (item is not null)
             {
                 _context.Reservations.Remove(item);
                 await _context.SaveChangesAsync();
@@ -48,30 +58,37 @@ namespace ResturantReservation.API.Controllers
         [HttpPut]
         public async Task<ActionResult> Edit(int id, ReservationDto entity)
         {
-            var item=await _context.Reservations.FirstOrDefaultAsync(res=>res.ReservationId == id);
-            if (item is not null)
+            ReservationDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                item.ResturantId = entity.ResturantId;
-                item.CustomerId = entity.CustomerId;
-                item.PartySize = entity.PartySize;  
-                item.TableId = entity.TableId;
-                item.ReservationDate = entity.ReservationDate;
-               await _context.SaveChangesAsync();
-                return Ok($"updated reservation with Id={item.ReservationId} successfully");
+                var item = await _context.Reservations.FirstOrDefaultAsync(res => res.ReservationId == id);
+                if (item is not null)
+                {
+                    item.ResturantId = entity.ResturantId;
+                    item.CustomerId = entity.CustomerId;
+                    item.PartySize = entity.PartySize;
+                    item.TableId = entity.TableId;
+                    item.ReservationDate = entity.ReservationDate;
+                    await _context.SaveChangesAsync();
+                    return Ok($"updated reservation with Id={item.ReservationId} successfully");
+                }
+                return NotFound("Not updated");
             }
-            return NotFound("Not updated");
+            return BadRequest(result.ToString());
         }
         [HttpGet]
         public async Task<ActionResult<ReservationDto>> Get(int id)
         {
-            var item=await _context.Reservations.FirstOrDefaultAsync(res=>res.ReservationId==id);  
-            if (item is not null) {
+            var item = await _context.Reservations.FirstOrDefaultAsync(res => res.ReservationId == id);
+            if (item is not null)
+            {
                 var reservation = new ReservationDto
                 {
                     ReservationId = item.ReservationId,
                     ReservationDate = item.ReservationDate,
                     ResturantId = item.ResturantId,
-                    CustomerId = item.CustomerId,   
+                    CustomerId = item.CustomerId,
                     PartySize = item.PartySize,
                     TableId = item.TableId
                 };
@@ -85,7 +102,7 @@ namespace ResturantReservation.API.Controllers
             try
             {
                 var items = await _context.Reservations.ToListAsync();
-                var reservations = items.Select(res => new ReservationDto 
+                var reservations = items.Select(res => new ReservationDto
                 {
                     ReservationId = res.ReservationId,
                     ReservationDate = res.ReservationDate,
@@ -107,7 +124,7 @@ namespace ResturantReservation.API.Controllers
         {
             try
             {
-                var items = await _context.Reservations.Where(res=>res.CustomerId==customerId).ToListAsync();
+                var items = await _context.Reservations.Where(res => res.CustomerId == customerId).ToListAsync();
                 var reservations = items.Select(res => new ReservationDto
                 {
                     ReservationId = res.ReservationId,
@@ -124,6 +141,6 @@ namespace ResturantReservation.API.Controllers
                 return NotFound("no items found yet");
             }
         }
-      
+
     }
 }

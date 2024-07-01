@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResturantReservation.API.DTO;
+using ResturantReservation.API.Validators;
 using ResturantReservation.Db;
 using ResturantReservation.Db.Models;
 
@@ -21,17 +23,23 @@ namespace ResturantReservation.API.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(ResturantDto entity)
         {
-            var resturant = new Resturant
+            ResturantDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                ResturantId = entity.ResturantId,
-                Address = entity.Address,
-                PhoneNumber = entity.PhoneNumber,
-                OpeningHours = entity.OpeningHours,
-                Name = entity.Name
-            };
-            _context.Resturants.Add(resturant);
-            await _context.SaveChangesAsync();
-            return Ok($"resturant with id={resturant.ResturantId} sucessfully added");
+                var resturant = new Resturant
+                {
+                    ResturantId = entity.ResturantId,
+                    Address = entity.Address,
+                    PhoneNumber = entity.PhoneNumber,
+                    OpeningHours = entity.OpeningHours,
+                    Name = entity.Name
+                };
+                _context.Resturants.Add(resturant);
+                await _context.SaveChangesAsync();
+                return Ok($"resturant with id={resturant.ResturantId} sucessfully added");
+            }
+            return BadRequest(result.ToString());
         }
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
@@ -48,23 +56,29 @@ namespace ResturantReservation.API.Controllers
         [HttpPut]
         public async Task<ActionResult> Edit(int id, ResturantDto entity)
         {
-            var item=_context.Resturants.FirstOrDefault(res=>res.ResturantId==id);
-            if (item is not null)
+            ResturantDtoValidator validator = new();
+            ValidationResult result = validator.Validate(entity);
+            if (result.IsValid)
             {
-                item.Address = entity.Address;
-                item.PhoneNumber = entity.PhoneNumber;
-                item.OpeningHours = entity.OpeningHours;
-                item.Name = entity.Name;
-                await _context.SaveChangesAsync();
-                return Ok($"item with id={item.ResturantId} successfully updated");
+                var item = _context.Resturants.FirstOrDefault(res => res.ResturantId == id);
+                if (item is not null)
+                {
+                    item.Address = entity.Address;
+                    item.PhoneNumber = entity.PhoneNumber;
+                    item.OpeningHours = entity.OpeningHours;
+                    item.Name = entity.Name;
+                    await _context.SaveChangesAsync();
+                    return Ok($"item with id={item.ResturantId} successfully updated");
+                }
+                return NotFound("not found");
             }
-            return NotFound("not found");
+            return BadRequest(result.ToString());
         }
         [HttpGet]
         public async Task<ActionResult<ResturantDto>> Get(int id)
         {
-            var item=await _context.Resturants.FirstOrDefaultAsync(res=>res.ResturantId== id);  
-            if(item is not null)
+            var item = await _context.Resturants.FirstOrDefaultAsync(res => res.ResturantId == id);
+            if (item is not null)
             {
                 var resturant = new ResturantDto
                 {
